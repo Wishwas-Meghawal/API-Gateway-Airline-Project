@@ -47,9 +47,34 @@ async function signin(data){
 }
 
 
+async function isAuthenticated(token){
+  try {
+    if(!token){
+      throw new AppError('Missing JWT token in the request',StatusCodes.BAD_REQUEST);
+    }
+    const response = Auth.verifyToken(token);
+    const user = await userRepo.get(response.id);
+     if(!user){
+      throw new AppError('No user found for the given token',StatusCodes.NOT_FOUND);
+    }
+    return user.id;
+  } catch (error) {
+    if(error instanceof AppError){
+      throw error;
+    }
+    if(error.name == 'JsonWebTokenError'){
+      throw new AppError('Invalid JWT token in the request',StatusCodes.BAD_REQUEST);
+    }
+    console.log('Something went wrong in the service layer',error);
+    throw error;
+  }
+}
+
+
 
 
 module.exports = {
   create,
-  signin
+  signin,
+  isAuthenticated
 }

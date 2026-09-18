@@ -3,6 +3,9 @@ const { StatusCodes } = require('http-status-codes');
 const { ErrorResponse } = require('../utils/common');
 const AppError = require('../utils/errors/app-error');
 
+const {UserService} = require('../services');
+const { response } = require('express');
+
 function validateAuthRequest(req, res, next) {
   if (!req.body.email) {
     ErrorResponse.message = 'Something went wrong while validating the request';
@@ -21,6 +24,22 @@ function validateAuthRequest(req, res, next) {
   next();
 }
 
+
+async function checkAuth(req, res, next){
+  try {
+    const response = await UserService.isAuthenticated(req.headers['x-access-token']);
+    if(response){
+      req.user = response; // setting the user id in the request object
+      next();
+    }
+  } catch (error) {
+    return res
+    .status(error.statusCode)
+    .json(error);
+  }
+}
+
 module.exports = { 
-  validateAuthRequest
+  validateAuthRequest,
+  checkAuth,
 };
